@@ -6,9 +6,18 @@ GNOME's native yellow is an approximation of Tibeb gold; this does not replace
 every application's colors. Applications that ignore system appearance settings
 may need their own dark-mode setting.
 
+Quick Settings has its own Tibeb Shell theme: charcoal surfaces, ivory sans-serif
+labels, outlined gold toggles, slim gold sliders, and a vector woven edge. It
+keeps GNOME's real controls, submenu buttons, keyboard focus, and live statuses.
+The panel is opaque to keep it readable independently of wallpaper blur.
+The overlay imports the installed Yaru dark Shell stylesheet for other surfaces.
+Prepared for GNOME Shell 50; other versions may need selector adjustments.
+
 The theme also adds red/yellow/green window controls to GTK 3 and GTK 4 apps,
-places the controls on the left, and gives the Tibeb terminal profile 18%
-background transparency and a woven-pattern greeting. The greeting launches
+places the controls on the left, and gives the Tibeb terminal profile 8%
+background transparency, Ubuntu Mono 12 with comfortable line spacing, a gold
+block cursor, and a compact woven greeting in gold, ivory, and sage. Narrow
+windows get a one-line signature. The greeting launches
 your normal login shell without modifying its startup files.
 
 When Blur My Shell is already installed in your user extensions directory,
@@ -39,11 +48,42 @@ Python 3.11+ with PyGObject. Prepared on Ubuntu 26.04. Run from the project root
 /usr/bin/python3 ubuntu/theme.py restore
 ```
 
+To install and apply only Quick Settings, preserving the current wallpaper,
+terminal, GTK appearance, and application blur settings:
+
+```bash
+/usr/bin/python3 ubuntu/theme.py apply-shell
+```
+
+To apply only the terminal profile and greeting, use
+`/usr/bin/python3 ubuntu/theme.py apply-terminal`. Open a new terminal window
+to see the greeting. Your existing shell prompt and startup files stay intact.
+The woven motif is a welcome header, not a permanent border around command output.
+
+GNOME Files 50 also has scoped Tibeb styling: charcoal content, a darker sidebar
+with a woven edge, ivory labels, and gold selection outlines and breadcrumbs.
+Apply it with `/usr/bin/python3 ubuntu/theme.py apply-files`, then fully close
+and reopen Files. The GTK 4 import and assets are backed up; other applications
+do not receive the Files color overrides. Native file navigation, search,
+selection, and transfer controls remain in place.
+
+This requires `yaru-theme-gnome-shell` and GNOME's User Themes extension.
+The theme is installed under `~/.local/share/themes/Tibeb/gnome-shell/`, and
+User Themes is enabled if needed. Close and reopen the system menu to see it.
+Its CSS and vector trim are backed up with the other managed files. If all
+extensions are globally disabled, enable them in the Extensions app first.
+When Blur My Shell is installed, popup background overrides are turned off and
+its preserve-theme option is enabled where supported. This prevents it from
+erasing the woven edge and recoloring the toggles. These settings affect popup
+surfaces and are included in the restore backup; application blur stays enabled.
+The restore command restores the entire saved Tibeb setup, including the
+previous Shell theme; it is not limited to the most recent apply operation.
+
 No sudo is needed. Open a new GNOME Terminal window after applying; existing
 windows keep their current profile. You can also select Tibeb in Terminal's
 profile menu. Your existing profiles are not edited. If GNOME's User Themes
-extension is installed, its custom Shell theme is reset to the system theme;
-your previous selection is included in the backup. Extensions remain enabled.
+extension is installed, the Tibeb Shell theme is selected; your previous
+selection is included in the backup. Unrelated extension choices are preserved.
 
 The first backup is kept in `~/.local/state/tibeb/ubuntu-backup.json` until you
 restore. Reapplying does not overwrite that original snapshot. Restore resets
