@@ -1,0 +1,194 @@
+/* Tibeb Quick Settings — approved charcoal / gold / woven-edge concept.
+ * Native GNOME controls retain their layout, labels and interactions.
+ * Yaru supplies the rest of the Shell; this overlay owns Quick Settings.
+ * The woven edge is decorative. Checked states use gold outlines, while
+ * keyboard focus uses an ivory inset ring and disabled states stay legible.
+ */
+@import url("file:///usr/share/gnome-shell/theme/Yaru-dark/gnome-shell.css");
+
+.quick-settings {
+  font-family: "Ubuntu Sans";
+  font-size: 14px;
+  color: #e9e2d3;
+  background-color: #141a1a;
+  background-image: url("tibeb-weave.svg");
+  background-repeat: no-repeat;
+  background-position: 11px 20px;
+  border: 1px solid #39413d;
+  border-radius: 24px;
+  padding: 20px 20px 20px 42px;
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.35);
+}
+
+.quick-settings-grid { spacing-rows: 12px; spacing-columns: 12px; }
+
+/* St uses a Pango family, not a browser fallback-family list. Set labels
+ * explicitly so a desktop document/math font cannot leak into this panel. */
+.quick-settings StLabel { font-family: "Ubuntu Sans"; }
+
+.quick-settings .quick-toggle,
+.quick-settings .quick-toggle-has-menu {
+  min-width: 12.5em;
+  max-width: 12.5em;
+  min-height: 4.2em;
+  border-radius: 12px;
+}
+
+.quick-settings .quick-toggle,
+.quick-settings .quick-toggle-menu-button {
+  color: #e9e2d3;
+  background-color: #222b29;
+  border: 1px solid #38433e;
+  box-shadow: none;
+  transition-duration: 120ms;
+}
+
+.quick-settings .quick-toggle:hover,
+.quick-settings .quick-toggle-menu-button:hover {
+  background-color: #303b35;
+  color: #f4eee2;
+}
+
+.quick-settings .quick-toggle:checked,
+.quick-settings .quick-toggle-menu-button:checked {
+  color: #f4eee2;
+  background-color: #2c2d23;
+  border-color: #e4b96f;
+}
+
+.quick-settings .quick-toggle:checked:hover,
+.quick-settings .quick-toggle-menu-button:checked:hover {
+  background-color: #3a392a;
+}
+
+.quick-settings .quick-toggle:active,
+.quick-settings .quick-toggle-menu-button:active {
+  background-color: #454333;
+}
+
+.quick-settings .quick-toggle:focus,
+.quick-settings .quick-toggle-menu-button:focus {
+  box-shadow: inset 0 0 0 2px #e9e2d3 !important;
+}
+
+.quick-settings .quick-toggle:insensitive,
+.quick-settings .quick-toggle-menu-button:insensitive {
+  color: #a8afa3;
+  background-color: #1c2321;
+  border-color: #303932;
+}
+
+.quick-settings .quick-toggle .quick-toggle-title { font-weight: 600; }
+.quick-settings .quick-toggle .quick-toggle-subtitle {
+  font-size: 12px;
+  font-weight: 400;
+  color: #c1c4b4;
+}
+.quick-settings .quick-toggle .quick-toggle-icon { icon-size: 20px; }
+.quick-settings .quick-toggle:checked .quick-toggle-icon { color: #e4b96f; }
+.quick-settings .quick-toggle > StBoxLayout { spacing: 10px; }
+
+/* Split toggles share one outline, including the native submenu button. */
+.quick-settings .quick-toggle-has-menu .quick-toggle {
+  min-width: 0;
+  max-width: auto;
+}
+.quick-settings .quick-toggle-has-menu .quick-toggle:ltr {
+  border-radius: 12px 0 0 12px;
+  border-right-width: 0;
+}
+.quick-settings .quick-toggle-has-menu .quick-toggle:rtl {
+  border-radius: 0 12px 12px 0;
+  border-left-width: 0;
+}
+.quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:ltr {
+  border-radius: 0 12px 12px 0;
+  border-left-width: 0;
+}
+.quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:rtl {
+  border-radius: 12px 0 0 12px;
+  border-right-width: 0;
+}
+.quick-settings .quick-toggle-has-menu .quick-toggle:ltr:last-child,
+.quick-settings .quick-toggle-has-menu .quick-toggle:rtl:last-child {
+  border-radius: 12px;
+  border-width: 1px;
+}
+.quick-settings .quick-toggle-has-menu .quick-toggle-separator {
+  width: 0;
+  background-color: transparent;
+}
+
+.quick-settings .quick-settings-system-item .icon-button,
+.quick-settings .quick-settings-system-item .power-item {
+  color: #e9e2d3;
+  background-color: #222b29;
+  border: 1px solid #38433e;
+  box-shadow: none;
+  padding: 10px;
+}
+.quick-settings .quick-settings-system-item .icon-button {
+  border-radius: 999px;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 10px;
+}
+.quick-settings .quick-settings-system-item .icon-button StIcon { icon-size: 18px; }
+.quick-settings .quick-settings-system-item .power-item {
+  min-width: 0;
+  max-width: auto;
+  min-height: 0;
+  border-radius: 12px;
+  background-color: transparent;
+  border-color: transparent;
+  padding: 0 6px;
+}
+.quick-settings .quick-settings-system-item .power-item .quick-toggle-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.quick-settings .quick-settings-system-item .icon-button:hover,
+.quick-settings .quick-settings-system-item .power-item:hover {
+  background-color: #363d30;
+  color: #e4b96f;
+}
+.quick-settings .quick-settings-system-item .icon-button:focus,
+.quick-settings .quick-settings-system-item .power-item:focus {
+  box-shadow: inset 0 0 0 2px #e9e2d3 !important;
+}
+.quick-settings .quick-settings-system-item > StBoxLayout { spacing: 10px; }
+
+.quick-settings .slider {
+  color: #e9e2d3;
+  -barlevel-height: 4px;
+  -barlevel-background-color: #39413d;
+  -barlevel-active-background-color: #e4b96f;
+  -barlevel-overdrive-color: #d27869;
+  -slider-handle-radius: 7px;
+}
+.quick-settings .quick-slider .icon-button {
+  background-color: transparent;
+  color: #e9e2d3;
+}
+.quick-settings .quick-slider .icon-button:hover { background-color: #303b35; }
+.quick-settings .quick-slider .slider-bin:focus {
+  box-shadow: inset 0 0 0 2px #e4b96f !important;
+  background-color: #222b29;
+}
+
+.quick-settings .quick-toggle-menu {
+  color: #e9e2d3;
+  background-color: #1e2724;
+  border: 1px solid #39413d;
+  border-radius: 16px;
+  box-shadow: none;
+}
+.quick-settings .quick-toggle-menu .header .icon.active {
+  color: #e4b96f;
+  background-color: #36392b;
+}
+.quick-settings .quick-toggle-menu .popup-menu-item:focus,
+.quick-settings .quick-toggle-menu .popup-menu-item:hover {
+  color: #f4eee2;
+  background-color: #363d30;
+}
