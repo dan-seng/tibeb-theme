@@ -1,0 +1,73 @@
+/* Tibeb for GNOME Files 50 / GTK 4. Scoped to Files, not other GTK apps. */
+.nautilus-window {
+  --window-bg-color: #141a1a;
+  --window-fg-color: #e9e2d3;
+  --view-bg-color: #141a1a;
+  --view-fg-color: #e9e2d3;
+  --headerbar-bg-color: #1c2421;
+  --headerbar-fg-color: #e9e2d3;
+  --headerbar-backdrop-color: #19201e;
+  --sidebar-bg-color: #101715;
+  --sidebar-fg-color: #e9e2d3;
+  --sidebar-backdrop-color: #101715;
+  --secondary-sidebar-bg-color: #18201c;
+  --secondary-sidebar-fg-color: #e9e2d3;
+  --card-bg-color: #222b29;
+  --card-fg-color: #e9e2d3;
+  --popover-bg-color: #222b29;
+  --popover-fg-color: #e9e2d3;
+  --dialog-bg-color: #1c2421;
+  --dialog-fg-color: #e9e2d3;
+  --accent-bg-color: #e4b96f;
+  --accent-fg-color: #141a1a;
+  --accent-color: #e4b96f;
+  --border-color: #39443f;
+  font-family: "Ubuntu Sans";
+  color: #e9e2d3;
+  background-color: #141a1a;
+}
+
+.nautilus-window .navigation-sidebar {
+  background-color: #101715;
+  background-image: url("tibeb-weave.svg");
+  background-repeat: no-repeat;
+  background-position: 8px 12px;
+  background-size: 12px 960px;
+  padding-left: 26px;
+  padding-right: 8px;
+}
+.nautilus-window .navigation-sidebar row {
+  border-radius: 9px;
+  margin: 2px 0;
+}
+.nautilus-window .navigation-sidebar row:selected {
+  color: #f4eee2;
+  background-color: #333326;
+  box-shadow: inset 0 0 0 1px #e4b96f;
+}
+.nautilus-window .navigation-sidebar row:selected image { color: #e4b96f; }
+.nautilus-window .navigation-sidebar row:hover { background-color: #28332c; }
+.nautilus-window .navigation-sidebar row:selected:hover { background-color: #3b3b2b; }
+
+.nautilus-window .nautilus-pathbar {
+  background-color: #242d2b;
+  box-shadow: inset 0 0 0 1px #39443f;
+  border-radius: 10px;
+}
+.nautilus-window .nautilus-path-button.current-dir { color: #e4b96f; }
+.nautilus-window .nautilus-grid-view gridview > child:selected,
+.nautilus-window .nautilus-list-view listview > row:selected {
+  color: #f4eee2;
+  background-color: #39443f;
+  box-shadow: inset 0 0 0 1px #e4b96f;
+}
+.nautilus-window .nautilus-grid-view gridview > child:selected:hover,
+.nautilus-window .nautilus-list-view listview > row:selected:hover {
+  background-color: #465044;
+}
+.nautilus-window .floating-bar {
+  background-color: #242d2b;
+  color: #e9e2d3;
+}
+/* Retain the native focus indicator, with a legible Tibeb accent. */
+.nautilus-window :focus-visible { outline-color: #e4b96f; }
