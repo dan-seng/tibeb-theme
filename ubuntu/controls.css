@@ -1,0 +1,43 @@
+/* Tibeb: Apple-style window controls for GTK 3 and GTK 4. */
+headerbar button.titlebutton,
+windowcontrols button {
+  min-width: 14px;
+  min-height: 14px;
+  padding: 0;
+  margin: 6px 4px;
+  border-radius: 999px;
+  border: none;
+  background-image: none;
+  background-color: transparent;
+  box-shadow: none;
+  color: transparent;
+}
+headerbar button.titlebutton.close,
+windowcontrols button.close {
+  background-image: radial-gradient(circle at center, #ff6058 0, #ff6058 7px, transparent 7.5px);
+}
+headerbar button.titlebutton.minimize,
+windowcontrols button.minimize {
+  background-image: radial-gradient(circle at center, #ffbd2e 0, #ffbd2e 7px, transparent 7.5px);
+}
+headerbar button.titlebutton.maximize,
+windowcontrols button.maximize {
+  background-image: radial-gradient(circle at center, #28c840 0, #28c840 7px, transparent 7.5px);
+}
+headerbar button.titlebutton image,
+windowcontrols button image {
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 14px;
+  min-height: 14px;
+}
+headerbar button.titlebutton:hover,
+windowcontrols button:hover { color: #141a1a; }
+headerbar button.titlebutton:hover image,
+windowcontrols button:hover image { opacity: 0.8; }
+headerbar button.titlebutton:focus,
+windowcontrols button:focus {
+  outline: 2px solid #e4b96f;
+  outline-offset: 3px;
+}
