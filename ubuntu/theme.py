@@ -20,12 +20,16 @@ FILE_STATE = Path.home() / ".local/state/tibeb/ubuntu-files.json"
 BLUR_ID = "blur-my-shell@aunetx"
 BLUR_DIR = Path.home() / ".local/share/gnome-shell/extensions" / BLUR_ID
 BLUR = "org.gnome.shell.extensions.blur-my-shell.applications"
+BLUR_POPUP = "org.gnome.shell.extensions.blur-my-shell.popup"
 DESKTOP_BLUR_EXCLUSIONS = ("com.desktop.ding", "com.rastersoft.ding")
 INTERFACE = "org.gnome.desktop.interface"
 BACKGROUND = "org.gnome.desktop.background"
 PROFILES = "org.gnome.Terminal.ProfilesList"
 PROFILE = "org.gnome.Terminal.Legacy.Profile"
 SHELL = "org.gnome.shell.extensions.user-theme"
+SHELL_ID = "user-theme@gnome-shell-extensions.gcampax.github.com"
+SHELL_THEME = "Tibeb"
+SHELL_BASE = Path("/usr/share/gnome-shell/theme/Yaru-dark/gnome-shell.css")
 PROFILE_ID = str(uuid.uuid5(uuid.NAMESPACE_URL, "https://tibeb.local/ubuntu-terminal"))
 PROFILE_PATH = f"/org/gnome/terminal/legacy/profiles:/:{PROFILE_ID}/"
 
@@ -58,18 +62,97 @@ def write(entry, value):
     Gio.Settings.sync()
 
 
+def setting_entry(schema, key, value, path=None):
+    target = settings(schema, path)
+    if key not in target.props.settings_schema.list_keys():
+        raise RuntimeError(f"Required setting is unavailable: {schema} {key}")
+    kind = target.get_value(key).get_type_string()
+    return dict(schema=schema, path=path, key=key,
+                value=GLib.Variant(kind, value).print_(True))
+
+
+def make_shell_plan():
+    """Select the Shell overlay while preserving unrelated extension choices."""
+    if not SHELL_BASE.is_file():
+        raise RuntimeError("Install Ubuntu's yaru-theme-gnome-shell package first.")
+    settings(SHELL)  # Check availability before installing files.
+    shell = settings("org.gnome.shell")
+    enabled = shell.get_strv("enabled-extensions")
+    if SHELL_ID not in enabled:
+        enabled.append(SHELL_ID)
+    plan = [
+        setting_entry("org.gnome.shell", "enabled-extensions", enabled),
+        setting_entry("org.gnome.shell", "disabled-extensions",
+                      [item for item in shell.get_strv("disabled-extensions") if item != SHELL_ID]),
+        setting_entry(SHELL, "name", SHELL_THEME),
+    ]
+    if (BLUR_DIR / "schemas/gschemas.compiled").exists():
+        try:
+            popup = settings(BLUR_POPUP)
+        except RuntimeError:
+            popup = None
+        if popup is not None:
+            available = popup.props.settings_schema.list_keys()
+            # Popup overrides erase background images and replace checked colors.
+            # Leave application/panel blur active; let the Shell theme own menus.
+            for key, value in {"override-background": False, "preserve-shell-theme": True}.items():
+                if key in available:
+                    plan.append(setting_entry(BLUR_POPUP, key, value))
+    return plan
+
+
+def make_terminal_plan():
+    """Style the dedicated Tibeb profile without changing other profiles."""
+    with (ROOT / "colors.toml").open("rb") as source:
+        colors = tomllib.load(source)
+    plan = []
+
+    def add(schema, key, value, path=None):
+        plan.append(setting_entry(schema, key, value, path))
+
+    terminal = {
+        "visible-name": "Tibeb",
+        "use-theme-colors": False,
+        "background-color": colors["background"],
+        "foreground-color": colors["foreground"],
+        "bold-color-same-as-fg": True,
+        "cursor-colors-set": True,
+        "cursor-background-color": colors["accent"],
+        "cursor-foreground-color": colors["background"],
+        "highlight-colors-set": True,
+        "highlight-background-color": colors["selection"],
+        "highlight-foreground-color": colors["bright_foreground"],
+        "use-system-font": False,
+        "font": "Ubuntu Mono 12",
+        "cell-height-scale": 1.12,
+        "cursor-shape": "block",
+        "use-transparent-background": True,
+        "background-transparency-percent": 8,
+        "use-theme-transparency": False,
+        "use-custom-command": True,
+        "custom-command": "/bin/sh " + shlex.quote(str(Path.home() / ".local/share/tibeb/tibeb-terminal.sh")),
+        "palette": [colors[key] for key in (
+            "background", "red", "green", "yellow", "blue", "magenta", "cyan",
+            "light_foreground", "dark_foreground", "bright_red", "bright_green",
+            "bright_yellow", "bright_blue", "bright_magenta", "bright_cyan", "bright_foreground")],
+    }
+    for key, value in terminal.items():
+        add(PROFILE, key, value, PROFILE_PATH)
+    profiles = settings(PROFILES).get_strv("list")
+    if PROFILE_ID not in profiles:
+        profiles.append(PROFILE_ID)
+    add(PROFILES, "list", profiles)
+    add(PROFILES, "default", PROFILE_ID)
+    return plan
+
+
 def make_plan(wallpaper):
     with (ROOT / "colors.toml").open("rb") as source:
         colors = tomllib.load(source)
     plan = []
 
     def add(schema, key, value, path=None):
-        target = settings(schema, path)
-        if key not in target.props.settings_schema.list_keys():
-            raise RuntimeError(f"Required setting is unavailable: {schema} {key}")
-        kind = target.get_value(key).get_type_string()
-        plan.append(dict(schema=schema, path=path, key=key,
-                         value=GLib.Variant(kind, value).print_(True)))
+        plan.append(setting_entry(schema, key, value, path))
 
     if not Path("/usr/share/themes/Yaru-yellow-dark/gtk-3.0/gtk.css").exists():
         raise RuntimeError("Install Ubuntu's yaru-theme-gtk package first.")
@@ -86,38 +169,8 @@ def make_plan(wallpaper):
     add(BACKGROUND, "picture-options", "zoom")
     add(BACKGROUND, "primary-color", colors["background"])
     add(BACKGROUND, "secondary-color", colors["background"])
-    if Gio.SettingsSchemaSource.get_default().lookup(SHELL, True):
-        add(SHELL, "name", "")
 
-    terminal = {
-        "visible-name": "Tibeb",
-        "use-theme-colors": False,
-        "background-color": colors["background"],
-        "foreground-color": colors["foreground"],
-        "bold-color-same-as-fg": True,
-        "cursor-colors-set": True,
-        "cursor-background-color": colors["accent"],
-        "cursor-foreground-color": colors["background"],
-        "highlight-colors-set": True,
-        "highlight-background-color": colors["selection"],
-        "highlight-foreground-color": colors["bright_foreground"],
-        "use-transparent-background": True,
-        "background-transparency-percent": 18,
-        "use-theme-transparency": False,
-        "use-custom-command": True,
-        "custom-command": "/bin/sh " + shlex.quote(str(Path.home() / ".local/share/tibeb/tibeb-terminal.sh")),
-        "palette": [colors[key] for key in (
-            "background", "red", "green", "yellow", "blue", "magenta", "cyan",
-            "light_foreground", "dark_foreground", "bright_red", "bright_green",
-            "bright_yellow", "bright_blue", "bright_magenta", "bright_cyan", "bright_foreground")],
-    }
-    for key, value in terminal.items():
-        add(PROFILE, key, value, PROFILE_PATH)
-    profiles = settings(PROFILES).get_strv("list")
-    if PROFILE_ID not in profiles:
-        profiles.append(PROFILE_ID)
-    add(PROFILES, "list", profiles)
-    add(PROFILES, "default", PROFILE_ID)
+    plan.extend(make_terminal_plan())
     if (BLUR_DIR / "schemas/gschemas.compiled").exists():
         # DING's transparent desktop window covers the wallpaper. Its application
         # ID changed; keep both names excluded when enabling blur for all apps.
@@ -141,18 +194,48 @@ def make_plan(wallpaper):
             [item for item in shell.get_strv("disabled-extensions") if item != BLUR_ID])
     else:
         print("Blur My Shell is not installed; transparency will work without background blur.", file=sys.stderr)
+    if Gio.SettingsSchemaSource.get_default().lookup(SHELL, True):
+        shell_plan = make_shell_plan()
+        # Merge extension lists with the Blur My Shell changes already planned.
+        for entry in shell_plan:
+            previous = next((e for e in plan if e["schema"] == entry["schema"]
+                             and e["key"] == entry["key"]), None)
+            if previous is not None:
+                values = GLib.Variant.parse(None, previous["value"], None, None).unpack()
+                if entry["key"] == "enabled-extensions":
+                    if SHELL_ID not in values:
+                        values.append(SHELL_ID)
+                else:
+                    values = [item for item in values if item != SHELL_ID]
+                previous["value"] = GLib.Variant("as", values).print_(True)
+            else:
+                plan.append(entry)
+    else:
+        print("Install GNOME's User Themes extension to enable Tibeb Quick Settings.", file=sys.stderr)
     return plan
 
 
-def install_files(home, backup_path):
-    """Preserve files and symlinks before installing the GTK controls and greeting."""
+def install_files(home, backup_path, shell_only=False, terminal_only=False, files_only=False):
+    """Preserve files and symlinks before installing theme assets."""
     snapshot = json.loads(backup_path.read_text()) if backup_path.exists() else {}
     css = (ROOT / "ubuntu/controls.css").read_text()
-    files = {
+    files = {} if shell_only else {
         ".config/gtk-3.0/gtk.css": css,
-        ".config/gtk-4.0/gtk.css": css,
+        ".config/gtk-4.0/gtk.css": css + '\n@import url("' +
+            (home / ".local/share/tibeb/nautilus.css").as_uri() + '");\n',
         ".local/share/tibeb/tibeb-terminal.sh": (ROOT / "ubuntu/tibeb-terminal.sh").read_text(),
+        ".local/share/tibeb/nautilus.css": (ROOT / "ubuntu/nautilus.css").read_text(),
+        ".local/share/tibeb/tibeb-weave.svg": (ROOT / "ubuntu/gnome-shell/tibeb-weave.svg").read_text(),
     }
+    for source in sorted((ROOT / "ubuntu/gnome-shell").iterdir()):
+        if source.is_file():
+            files[f".local/share/themes/{SHELL_THEME}/gnome-shell/{source.name}"] = source.read_text()
+    if terminal_only:
+        files = {key: value for key, value in files.items() if key.endswith("tibeb-terminal.sh")}
+    if files_only:
+        files = {key: value for key, value in files.items() if key in (
+            ".config/gtk-4.0/gtk.css", ".local/share/tibeb/nautilus.css",
+            ".local/share/tibeb/tibeb-weave.svg")}
     for relative, content in files.items():
         path = home / relative
         if relative not in snapshot:
@@ -227,12 +310,29 @@ def restore(backup_path):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("preview", "apply", "restore"))
+    parser.add_argument("action", choices=("preview", "apply", "apply-shell", "apply-terminal", "apply-files", "restore"))
     args = parser.parse_args()
+    if args.action == "apply-files":
+        install_files(Path.home(), FILE_STATE, files_only=True)
+        print("Applied Tibeb Files styling. Fully close and reopen Files to load it.")
+        return
+    if args.action == "apply-terminal":
+        plan = make_terminal_plan()
+        install_files(Path.home(), FILE_STATE, terminal_only=True)
+        apply(plan, STATE)
+        print("Applied Tibeb Terminal. Open a new terminal window for the woven greeting.")
+        return
+    if args.action == "apply-shell":
+        plan = make_shell_plan()
+        install_files(Path.home(), FILE_STATE, shell_only=True)
+        apply(plan, STATE)
+        print("Applied Tibeb Quick Settings. Close and reopen the system menu.")
+        return
     if args.action == "restore":
-        if not STATE.exists():
+        if not STATE.exists() and not FILE_STATE.exists():
             raise RuntimeError("No Ubuntu settings backup exists; nothing to restore.")
-        restore(STATE)
+        if STATE.exists():
+            restore(STATE)
         restore_files(Path.home(), FILE_STATE)
         print("Restored your previous desktop settings and terminal profile selection.")
         return
