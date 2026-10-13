@@ -12,10 +12,13 @@ import sys
 import tomllib
 import uuid
 
+import icons
+
 from gi.repository import Gio, GLib
 
 ROOT = Path(__file__).resolve().parent.parent
 STATE = Path.home() / ".local/state/tibeb/ubuntu-backup.json"
+FOLDER_STATE = Path.home() / ".local/state/tibeb/folder-icons.json"
 FILE_STATE = Path.home() / ".local/state/tibeb/ubuntu-files.json"
 BLUR_ID = "blur-my-shell@aunetx"
 BLUR_DIR = Path.home() / ".local/share/gnome-shell/extensions" / BLUR_ID
@@ -215,7 +218,7 @@ def make_plan(wallpaper):
     return plan
 
 
-def install_files(home, backup_path, shell_only=False, terminal_only=False, files_only=False):
+def install_files(home, backup_path, shell_only=False, terminal_only=False, files_only=False, icons_only=False):
     """Preserve files and symlinks before installing theme assets."""
     snapshot = json.loads(backup_path.read_text()) if backup_path.exists() else {}
     css = (ROOT / "ubuntu/controls.css").read_text()
@@ -236,6 +239,15 @@ def install_files(home, backup_path, shell_only=False, terminal_only=False, file
         files = {key: value for key, value in files.items() if key in (
             ".config/gtk-4.0/gtk.css", ".local/share/tibeb/nautilus.css",
             ".local/share/tibeb/tibeb-weave.svg")}
+    if icons_only:
+        parent = settings(INTERFACE).get_string("icon-theme")
+        installed = home / f".local/share/icons/{icons.NAME}/index.theme"
+        if parent == icons.NAME and installed.exists():
+            import configparser
+            config = configparser.ConfigParser()
+            config.read(installed)
+            parent = config["Icon Theme"]["Inherits"]
+        files = icons.assets(parent)
     for relative, content in files.items():
         path = home / relative
         if relative not in snapshot:
@@ -308,10 +320,53 @@ def restore(backup_path):
     backup_path.unlink()
 
 
+def assign_projects_icon():
+    """Custom folders need explicit metadata; their names do not select icons."""
+    folder = Path.home() / "Projects"
+    if not folder.is_dir():
+        return
+    target = Gio.File.new_for_path(str(folder))
+    keys = ("metadata::custom-icon", "metadata::custom-icon-name")
+    info = target.query_info(",".join(keys), Gio.FileQueryInfoFlags.NONE, None)
+    snapshot = json.loads(FOLDER_STATE.read_text()) if FOLDER_STATE.exists() else {}
+    if str(folder) not in snapshot:
+        snapshot[str(folder)] = {key: info.get_attribute_string(key) for key in keys}
+        FOLDER_STATE.parent.mkdir(parents=True, exist_ok=True)
+        FOLDER_STATE.write_text(json.dumps(snapshot, indent=2) + "\n")
+        FOLDER_STATE.chmod(0o600)
+    target.set_attribute("metadata::custom-icon", Gio.FileAttributeType.INVALID,
+                         None, Gio.FileQueryInfoFlags.NONE, None)
+    target.set_attribute_string("metadata::custom-icon-name", "folder-projects",
+                                Gio.FileQueryInfoFlags.NONE, None)
+
+
+def restore_folder_icons():
+    if not FOLDER_STATE.exists():
+        return
+    for path, attributes in json.loads(FOLDER_STATE.read_text()).items():
+        if not Path(path).is_dir():
+            continue
+        target = Gio.File.new_for_path(path)
+        for key, value in attributes.items():
+            if value is None:
+                target.set_attribute(key, Gio.FileAttributeType.INVALID, None,
+                                     Gio.FileQueryInfoFlags.NONE, None)
+            else:
+                target.set_attribute_string(key, value, Gio.FileQueryInfoFlags.NONE, None)
+    FOLDER_STATE.unlink()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("preview", "apply", "apply-shell", "apply-terminal", "apply-files", "restore"))
+    parser.add_argument("action", choices=("preview", "apply", "apply-shell", "apply-terminal", "apply-files", "apply-icons", "restore"))
     args = parser.parse_args()
+    if args.action == "apply-icons":
+        plan = [setting_entry(INTERFACE, "icon-theme", icons.NAME)]
+        install_files(Path.home(), FILE_STATE, icons_only=True)
+        apply(plan, STATE)
+        assign_projects_icon()
+        print("Applied Tibeb folder and battery icons. Reopen Files; log out and in if Shell retains cached icons.")
+        return
     if args.action == "apply-files":
         install_files(Path.home(), FILE_STATE, files_only=True)
         print("Applied Tibeb Files styling. Fully close and reopen Files to load it.")
@@ -329,10 +384,11 @@ def main():
         print("Applied Tibeb Quick Settings. Close and reopen the system menu.")
         return
     if args.action == "restore":
-        if not STATE.exists() and not FILE_STATE.exists():
+        if not STATE.exists() and not FILE_STATE.exists() and not FOLDER_STATE.exists():
             raise RuntimeError("No Ubuntu settings backup exists; nothing to restore.")
         if STATE.exists():
             restore(STATE)
+        restore_folder_icons()
         restore_files(Path.home(), FILE_STATE)
         print("Restored your previous desktop settings and terminal profile selection.")
         return
