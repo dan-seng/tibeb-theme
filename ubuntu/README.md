@@ -106,3 +106,22 @@ To run the settings and rollback tests without touching your desktop:
 ```bash
 GSETTINGS_BACKEND=memory /usr/bin/python3 ubuntu/test_theme.py
 ```
+
+## Simple folder and battery icons
+
+Run `/usr/bin/python3 ubuntu/theme.py apply-icons` to install the Tibeb icon
+layer. It provides ivory folder outlines with tricolor tabs and coffee-cup
+battery levels, including charging and missing-battery states. Templates uses
+nested diamonds, with no cross motif. GNOME symbolic icons follow the Shell's
+foreground color; full-color versions retain the tricolor and gold fill.
+
+The layer inherits the currently selected icon theme, preserving Wi-Fi and other
+unrelated icons. Reopen Files to refresh cached icons; if the top bar still shows
+the previous battery, log out and back in. The Projects folder receives its obelisk icon automatically through GNOME folder
+metadata, with its previous assignment backed up for restore. Code and Archive
+icons are available by name for custom folders; ordinary folders use the generic
+design. The rendered `previews/folder-icons.png` shows the actual SVG assets.
+Settings and installed assets use the existing Tibeb restore backups. The full
+`apply` command selects Yaru-olive again; run `apply-icons` afterwards to reselect
+this optional layer. Run icon checks with
+`GSETTINGS_BACKEND=memory /usr/bin/python3 ubuntu/test_icons.py`.
