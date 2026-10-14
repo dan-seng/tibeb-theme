@@ -32,6 +32,7 @@ PROFILE = "org.gnome.Terminal.Legacy.Profile"
 SHELL = "org.gnome.shell.extensions.user-theme"
 SHELL_ID = "user-theme@gnome-shell-extensions.gcampax.github.com"
 SHELL_THEME = "Tibeb"
+DESKTOP_ID = "tibeb-desktop-v2@local"
 SHELL_BASE = Path("/usr/share/gnome-shell/theme/Yaru-dark/gnome-shell.css")
 PROFILE_ID = str(uuid.uuid5(uuid.NAMESPACE_URL, "https://tibeb.local/ubuntu-terminal"))
 PROFILE_PATH = f"/org/gnome/terminal/legacy/profiles:/:{PROFILE_ID}/"
@@ -218,7 +219,7 @@ def make_plan(wallpaper):
     return plan
 
 
-def install_files(home, backup_path, shell_only=False, terminal_only=False, files_only=False, icons_only=False):
+def install_files(home, backup_path, shell_only=False, terminal_only=False, files_only=False, icons_only=False, desktop_only=False):
     """Preserve files and symlinks before installing theme assets."""
     snapshot = json.loads(backup_path.read_text()) if backup_path.exists() else {}
     css = (ROOT / "ubuntu/controls.css").read_text()
@@ -248,6 +249,12 @@ def install_files(home, backup_path, shell_only=False, terminal_only=False, file
             config.read(installed)
             parent = config["Icon Theme"]["Inherits"]
         files = icons.assets(parent)
+    if desktop_only:
+        files = {
+            f".local/share/gnome-shell/extensions/{DESKTOP_ID}/{source.name}": source.read_bytes()
+            for source in (ROOT / "ubuntu/desktop-extension").iterdir() if source.is_file()
+        }
+        files[f".local/share/gnome-shell/extensions/{DESKTOP_ID}/wallpaper.png"] = (ROOT / "backgrounds/tibeb-highlands.png").read_bytes()
     for relative, content in files.items():
         path = home / relative
         if relative not in snapshot:
@@ -268,7 +275,10 @@ def install_files(home, backup_path, shell_only=False, terminal_only=False, file
         # Replace a symlink itself; never modify its target.
         if path.is_symlink():
             path.unlink()
-        path.write_text(content)
+        if isinstance(content, bytes):
+            path.write_bytes(content)
+        else:
+            path.write_text(content)
 
 
 def restore_files(home, backup_path):
@@ -321,10 +331,14 @@ def restore(backup_path):
 
 
 def assign_projects_icon():
+    for name, icon in (("Projects", "folder-projects"), ("Code", "folder-code"), ("Archive", "folder-archive")):
+        assign_folder_icon(name, icon)
+
+
+def assign_folder_icon(name, icon):
     """Custom folders need explicit metadata; their names do not select icons."""
-    folder = Path.home() / "Projects"
-    if not folder.is_dir():
-        return
+    folder = Path.home() / name
+    folder.mkdir(exist_ok=True)
     target = Gio.File.new_for_path(str(folder))
     keys = ("metadata::custom-icon", "metadata::custom-icon-name")
     info = target.query_info(",".join(keys), Gio.FileQueryInfoFlags.NONE, None)
@@ -336,7 +350,7 @@ def assign_projects_icon():
         FOLDER_STATE.chmod(0o600)
     target.set_attribute("metadata::custom-icon", Gio.FileAttributeType.INVALID,
                          None, Gio.FileQueryInfoFlags.NONE, None)
-    target.set_attribute_string("metadata::custom-icon-name", "folder-projects",
+    target.set_attribute_string("metadata::custom-icon-name", icon,
                                 Gio.FileQueryInfoFlags.NONE, None)
 
 
@@ -358,8 +372,26 @@ def restore_folder_icons():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("preview", "apply", "apply-shell", "apply-terminal", "apply-files", "apply-icons", "restore"))
+    parser.add_argument("action", choices=("preview", "apply", "apply-shell", "apply-terminal", "apply-files", "apply-icons", "apply-polish", "restore"))
     args = parser.parse_args()
+    if args.action == "apply-polish":
+        shell = settings("org.gnome.shell")
+        enabled = [item for item in shell.get_strv("enabled-extensions") if item != "tibeb-desktop@local"]
+        if DESKTOP_ID not in enabled:
+            enabled.append(DESKTOP_ID)
+        plan = [
+            setting_entry("org.gnome.shell", "enabled-extensions", enabled),
+            setting_entry("org.gnome.shell", "disabled-extensions",
+                          [item for item in shell.get_strv("disabled-extensions") if item != DESKTOP_ID]),
+            setting_entry(INTERFACE, "icon-theme", icons.NAME),
+        ]
+        install_files(Path.home(), FILE_STATE, icons_only=True)
+        install_files(Path.home(), FILE_STATE, terminal_only=True)
+        install_files(Path.home(), FILE_STATE, desktop_only=True)
+        assign_projects_icon()
+        apply(plan, STATE)
+        print("Installed Tibeb desktop polish. Log out and in if the new extension is not loaded yet.")
+        return
     if args.action == "apply-icons":
         plan = [setting_entry(INTERFACE, "icon-theme", icons.NAME)]
         install_files(Path.home(), FILE_STATE, icons_only=True)

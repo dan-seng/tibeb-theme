@@ -22,6 +22,18 @@ class IconsTest(unittest.TestCase):
         self.assertNotEqual(icons.battery(0), icons.battery(100))
         self.assertNotEqual(icons.battery(50), icons.battery(50, True))
 
+    def test_desktop_extension_binary_backup_restore(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            backup = home / 'files.json'
+            wallpaper = home / f'.local/share/gnome-shell/extensions/{theme.DESKTOP_ID}/wallpaper.png'
+            wallpaper.parent.mkdir(parents=True)
+            wallpaper.write_bytes(b'previous wallpaper')
+            theme.install_files(home, backup, desktop_only=True)
+            self.assertEqual(wallpaper.read_bytes(), (theme.ROOT / 'backgrounds/tibeb-highlands.png').read_bytes())
+            theme.restore_files(home, backup)
+            self.assertEqual(wallpaper.read_bytes(), b'previous wallpaper')
+
     def test_install_reapply_restore_preserves_inheritance(self):
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
