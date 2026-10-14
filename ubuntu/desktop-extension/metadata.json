@@ -1,0 +1,13 @@
+{
+  "uuid": "tibeb-desktop-v2@local",
+  "name": "Tibeb Desktop",
+  "description": "Ivory clock, live coffee battery and woven lock screen",
+  "shell-version": [
+    "50"
+  ],
+  "session-modes": [
+    "user",
+    "unlock-dialog"
+  ],
+  "version": 2
+}

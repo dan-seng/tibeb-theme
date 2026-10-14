@@ -1,0 +1,7 @@
+#panel .clock-display .clock {
+  color: #eee5cb;
+  border-bottom: 2px solid #d5ac42;
+  border-radius: 5px;
+}
+.unlock-dialog-clock-time { color: #eee5cb; }
+.unlock-dialog-clock-date { color: #e4b96f; }
