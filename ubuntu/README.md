@@ -125,3 +125,29 @@ Settings and installed assets use the existing Tibeb restore backups. The full
 `apply` command selects Yaru-olive again; run `apply-icons` afterwards to reselect
 this optional layer. Run icon checks with
 `GSETTINGS_BACKEND=memory /usr/bin/python3 ubuntu/test_icons.py`.
+
+## Desktop polish
+
+`/usr/bin/python3 ubuntu/theme.py apply-polish` installs the GNOME Shell 50
+extension `tibeb-desktop-v2@local`. Log out and back in after its first installation.
+It adds an ivory clock with a gold underline, a live coffee battery with red fill
+strictly below 15% and a lightning mark while charging, and the Tibeb wallpaper
+with a subtle diamond border on the lock screen. Wi-Fi is unchanged. The lock
+screen keeps native authentication, notifications, and background blur. This
+styles your session lock screen, not the system login screen.
+
+It also creates Code and Archive in your home directory if absent and assigns
+matching icons, alongside Projects. Previous folder metadata is backed up.
+Restore removes the icon assignments but leaves these directories and any
+contents in place. The terminal greeting reads “Ancient patterns. Modern pixels.
+Made in Ethiopia by Daniel G.”; narrow panes retain the compact greeting.
+
+The extension uses GNOME 50 Shell internals and must be reviewed before enabling
+it on another major version. Live lock-screen appearance requires checking after
+login. Disable it in Extensions to return to the native clock, battery rendering,
+and lock background. The existing `restore` command restores managed settings,
+files, and folder metadata. The battery is drawn directly in the panel and menu and repaints on UPower
+property changes, avoiding icon-image caching and fallback icons. Version 2
+replaces the earlier extension and needs a fresh login to load its code.
+Tests: `node ubuntu/test_coffee.mjs`, `node ubuntu/test_battery.mjs`, plus the Python
+theme and icon tests above.
