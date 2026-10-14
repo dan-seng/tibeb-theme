@@ -40,7 +40,7 @@ def folder(motif, symbolic=False):
 
 def battery(level, charging=False, symbolic=False, missing=False):
     color = '#bebebe' if symbolic else INK
-    fill = color if symbolic else (GOLD if level > 10 else '#d27869')
+    fill = color if symbolic else (GOLD if level >= 15 else '#d27869')
     body = f'<defs><clipPath id="cup"><path d="M5 5h14l-2 13q-.3 2-3 2h-4q-2.7 0-3-2z"/></clipPath></defs>'
     if level:
         height = 15 * level / 100
