@@ -32,7 +32,7 @@ PROFILE = "org.gnome.Terminal.Legacy.Profile"
 SHELL = "org.gnome.shell.extensions.user-theme"
 SHELL_ID = "user-theme@gnome-shell-extensions.gcampax.github.com"
 SHELL_THEME = "Tibeb"
-DESKTOP_ID = "tibeb-desktop-v2@local"
+DESKTOP_ID = "tibeb-desktop@local"
 SHELL_BASE = Path("/usr/share/gnome-shell/theme/Yaru-dark/gnome-shell.css")
 PROFILE_ID = str(uuid.uuid5(uuid.NAMESPACE_URL, "https://tibeb.local/ubuntu-terminal"))
 PROFILE_PATH = f"/org/gnome/terminal/legacy/profiles:/:{PROFILE_ID}/"
@@ -376,7 +376,7 @@ def main():
     args = parser.parse_args()
     if args.action == "apply-polish":
         shell = settings("org.gnome.shell")
-        enabled = [item for item in shell.get_strv("enabled-extensions") if item != "tibeb-desktop@local"]
+        enabled = [item for item in shell.get_strv("enabled-extensions") if item != "tibeb-desktop-v2@local"]
         if DESKTOP_ID not in enabled:
             enabled.append(DESKTOP_ID)
         plan = [

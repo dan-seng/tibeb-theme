@@ -1,4 +1,5 @@
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import St from 'gi://St';
 import Shell from 'gi://Shell';
@@ -11,13 +12,24 @@ import {attachCoffee} from './coffee.js';
 export default class TibebDesktop extends Extension {
     enable() {
         this._injections = new InjectionManager();
-        this._power = Main.panel.statusArea.quickSettings?._system?._systemItem?.powerToggle;
         this._coffeeCleanup = [];
-        if (!this._power?._proxy)
-            throw new Error('Tibeb: GNOME battery widget was not found');
-        const panelIcon = Main.panel.statusArea.quickSettings._system._indicator;
-        this._coffeeCleanup.push(attachCoffee(panelIcon, this._power._proxy, 'panel'));
-        this._coffeeCleanup.push(attachCoffee(this._power._icon, this._power._proxy, 'menu'));
+        // GNOME 50 builds Quick Settings asynchronously after network imports.
+        // Extensions can be enabled before its system indicator is present.
+        if (!this._attachBattery()) {
+            let attempts = 0;
+            this._batteryWait = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
+                if (this._attachBattery()) {
+                    this._batteryWait = null;
+                    return GLib.SOURCE_REMOVE;
+                }
+                if (++attempts >= 120) {
+                    console.error('Tibeb: battery widget unavailable after 30 seconds');
+                    this._batteryWait = null;
+                    return GLib.SOURCE_REMOVE;
+                }
+                return GLib.SOURCE_CONTINUE;
+            });
+        }
         const directory = this.path;
         this._injections.overrideMethod(UnlockDialog.prototype, '_createBackground', () => function (monitorIndex) {
             const monitor = Main.layoutManager.monitors[monitorIndex];
@@ -43,7 +55,30 @@ export default class TibebDesktop extends Extension {
         Main.screenShield._dialog?._updateBackgrounds();
     }
 
+    _attachBattery() {
+        const system = Main.panel.statusArea.quickSettings?._system;
+        const power = system?._systemItem?.powerToggle;
+        if (!power?._proxy || !power._icon?.get_parent() || !system._indicator?.get_parent())
+            return false;
+        this._power = power;
+        try {
+            this._coffeeCleanup.push(attachCoffee(system._indicator, power._proxy, 'panel'));
+            this._coffeeCleanup.push(attachCoffee(power._icon, power._proxy, 'menu'));
+        } catch (error) {
+            for (const cleanup of this._coffeeCleanup)
+                cleanup();
+            this._coffeeCleanup = [];
+            throw error;
+        }
+        console.log('Tibeb: attached live battery renderer');
+        return true;
+    }
+
     disable() {
+        if (this._batteryWait) {
+            GLib.source_remove(this._batteryWait);
+            this._batteryWait = null;
+        }
         for (const cleanup of this._coffeeCleanup ?? [])
             cleanup();
         this._coffeeCleanup = [];

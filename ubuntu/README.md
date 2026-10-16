@@ -129,7 +129,7 @@ this optional layer. Run icon checks with
 ## Desktop polish
 
 `/usr/bin/python3 ubuntu/theme.py apply-polish` installs the GNOME Shell 50
-extension `tibeb-desktop-v2@local`. Log out and back in after its first installation.
+extension `tibeb-desktop@local`. Log out and back in after its first installation.
 It adds an ivory clock with a gold underline, a live coffee battery with red fill
 strictly below 15% and a lightning mark while charging, and the Tibeb wallpaper
 with a subtle diamond border on the lock screen. Wi-Fi is unchanged. The lock
@@ -147,7 +147,7 @@ it on another major version. Live lock-screen appearance requires checking after
 login. Disable it in Extensions to return to the native clock, battery rendering,
 and lock background. The existing `restore` command restores managed settings,
 files, and folder metadata. The battery is drawn directly in the panel and menu and repaints on UPower
-property changes, avoiding icon-image caching and fallback icons. Version 2
-replaces the earlier extension and needs a fresh login to load its code.
+property changes, avoiding icon-image caching and fallback icons. Version 3 waits for GNOME’s asynchronous battery widget initialization before
+attaching. Updated extension code is loaded at the next login.
 Tests: `node ubuntu/test_coffee.mjs`, `node ubuntu/test_battery.mjs`, plus the Python
 theme and icon tests above.
