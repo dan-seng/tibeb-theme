@@ -32,6 +32,12 @@ trap 'rm -rf -- "$staging"' EXIT
 mkdir -- "$staging/backgrounds"
 cp -- "$source_dir/colors.toml" "$source_dir/icons.theme" "$source_dir/preview.png" "$staging/"
 cp -- "$source_dir/backgrounds/tibeb-highlands.png" "$staging/backgrounds/"
+cp -- "$source_dir/scripts/greeting.sh" "$staging/greeting.sh"
+
+# Omarchy consumes icons.theme but does not install the named icon theme.
+# Install the shared SVG assets before publishing a theme that refers to them.
+python3 "$source_dir/scripts/install_icons.py"
+printf '%s\n' 'Tibeb-Omarchy' > "$staging/icons.theme"
 
 if [[ -e $destination || -L $destination ]]; then
   backup_dir="$HOME/.local/state/tibeb/backups"
@@ -48,6 +54,7 @@ else
 fi
 
 echo "Installed Tibeb in $destination"
+echo "Custom folder icons installed; Wi-Fi inherits the existing base icon set."
 if "$apply"; then
   omarchy-theme-set tibeb
 else

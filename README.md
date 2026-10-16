@@ -29,44 +29,106 @@ The Omarchy theme below remains ready for your later switch.
 - `icons.theme` — standard Yaru-olive icons for an earthy look (when available).
 - `preview.png` — 16:9 competition/chooser concept preview.
 
-The installed theme contains only the palette, icons preference, and PNG assets.
-`install.sh` and `scripts/validate.py` are local development helpers; Omarchy does
-not execute them when installing this repository by URL. No custom application
-configs or Lua overrides are needed.
+## Install on Omarchy
 
-## Install on an Omarchy desktop
-
-Use an up-to-date Omarchy desktop with support for semantic `colors.toml`
-palettes. From this project's directory, run (requires Python 3.11 or newer):
+Run these commands **inside your Omarchy desktop session**, as your normal user.
+You need Git, Python 3.11+, and an up-to-date Omarchy installation with
+`omarchy-theme-set` and `omarchy-theme-set-templates` on your PATH.
 
 ```bash
+git clone https://github.com/dan-seng/tibeb-theme.git
+cd tibeb-theme
 bash install.sh --apply
 ```
 
-This validates the palette and PNG assets, checks for Omarchy's template renderer,
-installs the theme, and switches to Tibeb. An existing `tibeb` directory or symlink
-is moved to a uniquely named backup under `~/.local/state/tibeb/backups/` first.
-Run `bash install.sh` without `--apply` to install without switching.
+If you already have this checkout, run `bash install.sh --apply` from its root.
+Use `bash install.sh` to install without changing the active desktop theme;
+select it later with `omarchy-theme-set tibeb` or **Style → Theme → Tibeb**.
+No sudo is required by the installer.
 
-For a manual install without Python, run from this project's directory:
+The installer validates the assets, installs the palette and wallpaper into
+`~/.config/omarchy/themes/tibeb`, and installs the custom SVG icons into
+`~/.local/share/icons/Tibeb-Omarchy`. Omarchy selects these icons through the
+installed `icons.theme` file. Existing installations are moved to unique backups
+under `~/.local/state/tibeb/backups/`; their paths are printed during installation.
+Re-running the installer upgrades both parts and retains the previous versions.
 
-```bash
-mkdir -p ~/.config/omarchy/themes/tibeb/backgrounds
-cp colors.toml icons.theme preview.png ~/.config/omarchy/themes/tibeb/
-cp backgrounds/tibeb-highlands.png ~/.config/omarchy/themes/tibeb/backgrounds/
-omarchy-theme-set tibeb
-```
-
-Use the manual commands for a fresh install; the helper above handles backups
-when replacing an existing installation.
-
-Alternatively, publish the `omarchy-tibeb-theme` directory as the **root of a public GitHub repository**, then install using:
+The icon layer inherits Yaru-olive, Papirus-Dark, Adwaita, or hicolor, whichever
+is available in that order. It includes the approved folder symbols and static
+coffee battery icons, with nested diamonds instead of a cross. It supplies no
+Wi-Fi overrides. If no base theme is found, install one and retry:
 
 ```bash
-omarchy theme install https://github.com/YOUR_USERNAME/omarchy-tibeb-theme
+sudo pacman -S --needed adwaita-icon-theme
+bash install.sh --apply
 ```
 
-Use the Omarchy menu > Style > Theme if you prefer the GUI. Omarchy and its CLI must already be installed; this is **not** a general GNOME/Ubuntu theme.
+Close and reopen your file manager if it retains cached icons. Standard folders
+(Home, Documents, Downloads, Pictures, Music, Videos, Templates, and Public)
+resolve through their normal icon names. Custom folders can be assigned an icon
+using your file manager's folder properties. For file managers supporting GVfs
+icon metadata, these commands assign the additional icons:
+
+```bash
+mkdir -p ~/Projects ~/Code ~/Archive
+gio set ~/Projects metadata::custom-icon-name folder-projects
+gio set ~/Code metadata::custom-icon-name folder-code
+gio set ~/Archive metadata::custom-icon-name folder-archive
+```
+
+These optional commands require `gio` and a running GVfs metadata service. They
+are not run automatically, because file managers differ in custom-icon support.
+
+### Terminal greeting
+
+The installer includes a shell-independent greeting helper. Add this line once
+to `~/.bashrc` (Bash) or `~/.zshrc` (Zsh), then open a new terminal:
+
+```sh
+[ ! -r "$HOME/.config/omarchy/themes/tibeb/greeting.sh" ] || . "$HOME/.config/omarchy/themes/tibeb/greeting.sh"
+```
+
+It displays “Ancient patterns. Modern pixels. Made in Ethiopia by Daniel G.”
+without replacing your shell, prompt, or terminal configuration. Remove the line
+to disable the greeting. Fish users can run
+`sh ~/.config/omarchy/themes/tibeb/greeting.sh` from their interactive startup block.
+
+### What is portable
+
+| Feature | Omarchy installation |
+| --- | --- |
+| Charcoal, gold, and ivory application palette | Native `colors.toml` templates |
+| Tibeb highlands wallpaper | Native theme wallpaper |
+| Simplified Ethiopian folder icons | Installed SVG icon theme |
+| Coffee battery icon assets | Available to apps using standard icon names |
+| Terminal greeting | Optional startup line above |
+| Live coffee fill, exact 15% warning, clock accent, woven lock-screen overlay | **GNOME-only extension; not installed on Omarchy** |
+
+Omarchy's panel and lock screen use a different runtime. The GNOME extension is
+not a Hyprland plugin; this installer does not pretend to enable it, replace the
+panel, or overwrite your lock-screen configuration. Omarchy applies its native
+clock and lock-screen styling from the palette where supported. A live coffee
+widget would require a separate integration with your version's panel.
+
+### Install by theme URL (palette and wallpaper only)
+
+Once these changes are pushed to GitHub, Omarchy can install the base theme with:
+
+```bash
+omarchy-theme-install https://github.com/dan-seng/tibeb-theme.git
+```
+
+Omarchy clones the repository but does **not** run `install.sh`. This route uses
+the repository's Yaru-olive preference and does not install the custom icons or
+greeting helper. Use the local installer above for those additions. The local
+installer can also be run from the URL-installed checkout:
+
+```bash
+bash ~/.config/omarchy/themes/tibeb/install.sh --apply
+```
+
+That converts the checkout to an installed asset directory and saves the original
+checkout in the printed backup location. Keep a separate clone for development.
 
 ## Palette
 
@@ -100,12 +162,13 @@ Use the Omarchy menu > Style > Theme if you prefer the GUI. Omarchy and its CLI 
 - The UI in the preview is conceptual; the actual application and terminal arrangements are up to you.
 - The theme assets may be adapted by you for your project or contest entry. Review any applicable contest attribution rules.
 
-Theme reference: https://omarchy.org/manual/making-your-own-theme/
+Theme reference: [Omarchy theme installation](https://github.com/basecamp/omarchy/blob/master/bin/omarchy-theme-install).
 
 ## Validate and troubleshoot
 
 ```bash
 python3 scripts/validate.py
+python3 scripts/test_install.py
 ```
 
 If the installer reports that Omarchy is missing, run it on your Omarchy desktop.
@@ -121,3 +184,9 @@ To return to your previous desktop theme, select it in Style > Theme. To restore
 an older Tibeb installation, move the current `tibeb` folder aside and move the
 backed-up `tibeb` folder printed by the installer into `~/.config/omarchy/themes/`,
 then reapply it.
+
+To restore an earlier icon layer, move `~/.local/share/icons/Tibeb-Omarchy` aside
+and put the saved `Tibeb-Omarchy` directory printed by the installer back there.
+Select another theme before removing Tibeb entirely. The optional greeting is
+disabled by removing its startup line. Remove custom folder metadata with
+`gio set -t unset ~/Code metadata::custom-icon-name` (repeat for other folders).
